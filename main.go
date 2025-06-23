@@ -46,7 +46,7 @@ func idGen() func() int {
 	}
 }
 
-func (re *slices) addTask(w http.ResponseWriter, r *http.Request, getID func() int) {
+func (re *slices) addTask(w http.ResponseWriter, r *http.Request, i int) {
 	defer r.Body.Close()
 
 	msg, err := io.ReadAll(r.Body)
@@ -57,8 +57,6 @@ func (re *slices) addTask(w http.ResponseWriter, r *http.Request, getID func() i
 
 		return
 	}
-
-	i := getID()
 
 	rec := Record{i, string(msg), false}
 
@@ -71,9 +69,9 @@ func (re *slices) addTask(w http.ResponseWriter, r *http.Request, getID func() i
 		return
 	}
 
-	re.slice = append(re.slice, input{i, jsonRec})
-
 	w.WriteHeader(http.StatusCreated)
+
+	re.slice = append(re.slice, input{rec.ID, jsonRec})
 }
 
 func (re *slices) getByID(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +89,14 @@ func (re *slices) getByID(w http.ResponseWriter, r *http.Request) {
 	for _, item := range re.slice {
 		if item.idx == index {
 			w.WriteHeader(http.StatusOK)
-			log.Printf("%s", item.Rec)
+			_, err := w.Write(item.Rec)
+
+			if err != nil {
+				log.Printf("%s", err.Error())
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
+				return
+			}
 
 			return
 		}
@@ -104,7 +109,13 @@ func (re *slices) viewTask(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	for _, task := range re.slice {
-		log.Printf("task: %s", task.Rec)
+		_, err := w.Write(task.Rec)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Printf("%s", err.Error())
+
+			return
+		}
 	}
 
 	log.Printf("\n")
@@ -136,8 +147,6 @@ func (re *slices) completeTask(w http.ResponseWriter, r *http.Request) {
 
 			return
 		}
-
-		w.WriteHeader(http.StatusOK)
 
 		jsonSlice.Completed = true
 
@@ -192,7 +201,8 @@ func main() {
 	http.HandleFunc("/", hellohandler)
 
 	http.HandleFunc("POST /task", func(w http.ResponseWriter, r *http.Request) {
-		data.addTask(w, r, getID)
+		i := getID()
+		data.addTask(w, r, i)
 	})
 	http.HandleFunc("GET /task/{id}", data.getByID)
 	http.HandleFunc("GET /task", data.viewTask)
