@@ -11,7 +11,6 @@ import (
 )
 
 func TestHelloWorld(t *testing.T) {
-
 	request, _ := http.NewRequestWithContext(t.Context(), http.MethodGet, "localhost:8080/", http.NoBody)
 
 	response := httptest.NewRecorder()
