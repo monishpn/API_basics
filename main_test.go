@@ -2,21 +2,17 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
-	"time"
 )
 
 func TestHelloWorld(t *testing.T) {
-	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
-	defer cancel()
 
-	request, _ := http.NewRequestWithContext(ctx, http.MethodGet, "localhost:8080/", http.NoBody)
+	request, _ := http.NewRequestWithContext(t.Context(), http.MethodGet, "localhost:8080/", http.NoBody)
 
 	response := httptest.NewRecorder()
 
@@ -40,11 +36,8 @@ func Test(t *testing.T) {
 	ID := "1"
 	task := "Eating"
 
-	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
-	defer cancel()
-
 	// For AddTask
-	request, _ := http.NewRequestWithContext(ctx, http.MethodPost, "localhost:8080/task", bytes.NewBufferString(task))
+	request, _ := http.NewRequestWithContext(t.Context(), http.MethodPost, "localhost:8080/task", bytes.NewBufferString(task))
 
 	response := httptest.NewRecorder()
 
@@ -56,7 +49,7 @@ func Test(t *testing.T) {
 	}
 
 	// For GetByID
-	request, _ = http.NewRequestWithContext(ctx, http.MethodGet, "localhost:8080/task/{id}", http.NoBody)
+	request, _ = http.NewRequestWithContext(t.Context(), http.MethodGet, "localhost:8080/task/{id}", http.NoBody)
 	request.SetPathValue("id", ID)
 
 	response = httptest.NewRecorder()
@@ -75,7 +68,7 @@ func Test(t *testing.T) {
 	}
 
 	// For Completed Task
-	request, _ = http.NewRequestWithContext(ctx, http.MethodPut, "localhost:8080/task/{id}", http.NoBody)
+	request, _ = http.NewRequestWithContext(t.Context(), http.MethodPut, "localhost:8080/task/{id}", http.NoBody)
 	request.SetPathValue("id", ID)
 
 	response = httptest.NewRecorder()
@@ -87,7 +80,7 @@ func Test(t *testing.T) {
 	}
 
 	// For Viewing
-	request, _ = http.NewRequestWithContext(ctx, http.MethodGet, "localhost:8080/task/", http.NoBody)
+	request, _ = http.NewRequestWithContext(t.Context(), http.MethodGet, "localhost:8080/task/", http.NoBody)
 
 	response = httptest.NewRecorder()
 
@@ -101,7 +94,7 @@ func Test(t *testing.T) {
 	}
 
 	// For Deleting
-	request, _ = http.NewRequestWithContext(ctx, http.MethodDelete, "localhost:8080/task/{id}", http.NoBody)
+	request, _ = http.NewRequestWithContext(t.Context(), http.MethodDelete, "localhost:8080/task/{id}", http.NoBody)
 	request.SetPathValue("id", ID)
 
 	response = httptest.NewRecorder()
