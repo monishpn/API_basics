@@ -30,7 +30,7 @@ type Record struct {
 
 type input struct {
 	idx int
-	Rec []byte
+	Rec Record
 }
 
 type slices struct {
@@ -58,20 +58,23 @@ func (re *slices) addTask(w http.ResponseWriter, r *http.Request, i int) {
 		return
 	}
 
-	rec := Record{i, string(msg), false}
+	var reqBody struct {
+		T string `json:"task"`
+	}
 
-	jsonRec, err := json.Marshal(rec)
+	err = json.Unmarshal(msg, &reqBody)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Printf("%s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-
 		return
 	}
 
+	rec := Record{i, reqBody.T, false}
+
 	w.WriteHeader(http.StatusCreated)
 
-	re.slice = append(re.slice, input{rec.ID, jsonRec})
+	re.slice = append(re.slice, input{rec.ID, rec})
 }
 
 func (re *slices) getByID(w http.ResponseWriter, r *http.Request) {
@@ -89,15 +92,13 @@ func (re *slices) getByID(w http.ResponseWriter, r *http.Request) {
 	for _, item := range re.slice {
 		if item.idx == index {
 			w.WriteHeader(http.StatusOK)
-			_, err := w.Write(item.Rec)
-
+			msg, _ := json.Marshal(item.Rec)
+			_, err := w.Write(msg)
 			if err != nil {
-				log.Printf("%s", err.Error())
+				w.WriteHeader(http.StatusInternalServerError)
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-
 				return
 			}
-
 			return
 		}
 	}
@@ -109,7 +110,13 @@ func (re *slices) viewTask(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	for _, task := range re.slice {
-		_, err := w.Write(task.Rec)
+		msg, err := json.Marshal(task.Rec)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		_, err = w.Write(msg)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Printf("%s", err.Error())
@@ -118,7 +125,6 @@ func (re *slices) viewTask(w http.ResponseWriter, _ *http.Request) {
 		}
 	}
 
-	log.Printf("\n")
 }
 
 func (re *slices) completeTask(w http.ResponseWriter, r *http.Request) {
@@ -133,36 +139,13 @@ func (re *slices) completeTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var jsonSlice Record
-
 	for i, item := range re.slice {
 		if item.idx != index {
 			continue
 		}
 
-		err := json.Unmarshal(item.Rec, &jsonSlice)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Printf("%s", err.Error())
-
-			return
-		}
-
-		jsonSlice.Completed = true
-
-		updatedJSON, err := json.Marshal(jsonSlice)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Printf("%s", err.Error())
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-
-			return
-		}
-
 		w.WriteHeader(http.StatusAccepted)
-
-		re.slice[i].Rec = updatedJSON
-
+		re.slice[i].Rec.Completed = true
 		return
 	}
 

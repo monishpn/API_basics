@@ -7,8 +7,26 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 )
+
+// CREATING A MIRROR COPY OF RESPONSE_WRITER
+type errorWriter struct {
+	status int
+}
+
+func (e *errorWriter) Header() http.Header {
+	return http.Header{}
+}
+
+func (e *errorWriter) Write([]byte) (int, error) {
+	return 0, nil
+}
+
+func (e *errorWriter) WriteHeader(statusCode int) {
+	e.status = statusCode
+}
 
 func TestHelloWorld(t *testing.T) {
 	request, _ := http.NewRequestWithContext(t.Context(), http.MethodGet, "localhost:8080/", http.NoBody)
@@ -28,15 +46,28 @@ func TestHelloWorld(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Expected %d, got %d", http.StatusOK, response.Code)
 	}
+
+	errResponse := &errorWriter{}
+	hellohandler(errResponse, request)
+
+	if errResponse.status != http.StatusInternalServerError {
+		t.Errorf("Expected status %d, got %d", http.StatusInternalServerError, errResponse.status)
+	}
 }
 
-func Test(t *testing.T) {
+func Test_Passing(t *testing.T) {
 	re := slices{}
 	ID := "1"
-	task := "Eating"
+	task := `{
+		"task":"Eating"
+	}`
+	work := "Eating"
 
+	//
+	//
+	//
 	// For AddTask
-	request, _ := http.NewRequestWithContext(t.Context(), http.MethodPost, "localhost:8080/task", bytes.NewBufferString(task))
+	request, _ := http.NewRequestWithContext(t.Context(), http.MethodPost, "localhost:8080/task", strings.NewReader(task))
 
 	response := httptest.NewRecorder()
 
@@ -47,6 +78,9 @@ func Test(t *testing.T) {
 		t.Errorf("Expected %d, got %d", http.StatusCreated, response.Code)
 	}
 
+	//
+	//
+	//
 	// For GetByID
 	request, _ = http.NewRequestWithContext(t.Context(), http.MethodGet, "localhost:8080/task/{id}", http.NoBody)
 	request.SetPathValue("id", ID)
@@ -60,12 +94,15 @@ func Test(t *testing.T) {
 	}
 
 	op, _ := io.ReadAll(response.Body)
-	exp, _ := json.Marshal(Record{1, task, false})
+	exp, _ := json.Marshal(Record{1, work, false})
 
 	if !bytes.Equal(op, exp) {
 		t.Errorf("Expected %s, got %s", exp, string(op))
 	}
 
+	//
+	//
+	//
 	// For Completed Task
 	request, _ = http.NewRequestWithContext(t.Context(), http.MethodPut, "localhost:8080/task/{id}", http.NoBody)
 	request.SetPathValue("id", ID)
@@ -78,6 +115,9 @@ func Test(t *testing.T) {
 		t.Errorf("Expected %d, got %d", http.StatusAccepted, response.Code)
 	}
 
+	//
+	//
+	//
 	// For Viewing
 	request, _ = http.NewRequestWithContext(t.Context(), http.MethodGet, "localhost:8080/task/", http.NoBody)
 
@@ -85,13 +125,16 @@ func Test(t *testing.T) {
 
 	re.viewTask(response, request)
 
-	exp, _ = json.Marshal(Record{1, task, true})
+	exp, _ = json.Marshal(Record{1, work, true})
 	op, _ = io.ReadAll(response.Body)
 
 	if !bytes.Equal(op, exp) {
 		t.Errorf("Expected %s, got %s", exp, string(op))
 	}
 
+	//
+	//
+	//
 	// For Deleting
 	request, _ = http.NewRequestWithContext(t.Context(), http.MethodDelete, "localhost:8080/task/{id}", http.NoBody)
 	request.SetPathValue("id", ID)
@@ -103,4 +146,113 @@ func Test(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Expected %d, got %d", http.StatusOK, response.Code)
 	}
+}
+
+func Test_Failing(t *testing.T) {
+	re := slices{}
+	//ID := "1"
+	task := `{
+		"task":"Eating"
+	}`
+	work := "Eating"
+
+	//
+	//
+	//
+	// ADD TASK error check - when the input is not JSON
+	request := httptest.NewRequest(http.MethodPost, "localhost:8080/task", strings.NewReader(work))
+	response := httptest.NewRecorder()
+
+	re.addTask(response, request, 1)
+	if response.Code != http.StatusInternalServerError {
+		t.Errorf("Expected %d, got %d", http.StatusInternalServerError, response.Code)
+	}
+
+	//ADD TASK error check - w.Write err check
+
+	//
+	//
+	//
+	// GetByID PRINT ONLY SAID ID
+	request = httptest.NewRequest(http.MethodGet, "/task/{id}", nil)
+	response = httptest.NewRecorder()
+
+	// GetByID error check - when the ID given is not a integer
+	request.SetPathValue("id", "r")
+
+	re.getByID(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Expected %d, got %d", http.StatusNotFound, response.Code)
+	}
+
+	// GetByID error check - when the ID not present
+	request.SetPathValue("id", "3")
+	response = httptest.NewRecorder()
+
+	re.getByID(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Expected %d, got %d", http.StatusNotFound, response.Code)
+	}
+
+	//
+	//
+	//
+	// Add a sample data into re to check for completed and delete
+	request = httptest.NewRequest(http.MethodPut, "/task", bytes.NewBufferString(task))
+	re.addTask(response, request, 1)
+
+	//
+	//
+	//
+	// COMPLETE TASK - MARKING TRUE
+	request = httptest.NewRequest(http.MethodPut, "/task/{id}", nil)
+	response = httptest.NewRecorder()
+
+	// CompleteTask error check - when the ID given is not a integer
+	request.SetPathValue("id", "r")
+
+	re.completeTask(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Expected %d, got %d", http.StatusNotFound, response.Code)
+	}
+
+	// CompleteTask error check - when the ID not present
+	request.SetPathValue("id", "3")
+	response = httptest.NewRecorder()
+
+	re.completeTask(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Expected %d, got %d", http.StatusNotFound, response.Code)
+	}
+
+	//
+	//
+	//
+	// DELETE TASK - REMOVING
+	request = httptest.NewRequest(http.MethodDelete, "/task/{id}", nil)
+	response = httptest.NewRecorder()
+
+	// DeleteTask  error check - when the ID given is not a integer
+	request.SetPathValue("id", "r")
+
+	re.deleteTask(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Expected %d, got %d", http.StatusNotFound, response.Code)
+	}
+
+	// DeleteTask error check - when the ID not present
+	request.SetPathValue("id", "3")
+	response = httptest.NewRecorder()
+
+	re.deleteTask(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Expected %d, got %d", http.StatusNotFound, response.Code)
+	}
+
 }
