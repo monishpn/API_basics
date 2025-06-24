@@ -1,8 +1,9 @@
-package main
+package API_server
 
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +12,7 @@ import (
 	"testing"
 )
 
-// CREATING A MIRROR COPY OF RESPONSE_WRITER
+// CREATING A MIRROR COPY OF RESPONSE_WRITER.
 type errorWriter struct {
 	status int
 }
@@ -21,7 +22,7 @@ func (e *errorWriter) Header() http.Header {
 }
 
 func (e *errorWriter) Write([]byte) (int, error) {
-	return 0, nil
+	return 0, errors.New("Forced error")
 }
 
 func (e *errorWriter) WriteHeader(statusCode int) {
@@ -47,6 +48,7 @@ func TestHelloWorld(t *testing.T) {
 		t.Errorf("Expected %d, got %d", http.StatusOK, response.Code)
 	}
 
+	// W.Write err test
 	errResponse := &errorWriter{}
 	hellohandler(errResponse, request)
 
@@ -150,7 +152,6 @@ func Test_Passing(t *testing.T) {
 
 func Test_Failing(t *testing.T) {
 	re := slices{}
-	//ID := "1"
 	task := `{
 		"task":"Eating"
 	}`
@@ -164,17 +165,23 @@ func Test_Failing(t *testing.T) {
 	response := httptest.NewRecorder()
 
 	re.addTask(response, request, 1)
+
 	if response.Code != http.StatusInternalServerError {
 		t.Errorf("Expected %d, got %d", http.StatusInternalServerError, response.Code)
 	}
 
-	//ADD TASK error check - w.Write err check
+	//
+	//
+	//
+	// Add a sample data into re to check for completed and delete
+	request = httptest.NewRequest(http.MethodPut, "/task", bytes.NewBufferString(task))
+	re.addTask(response, request, 1)
 
 	//
 	//
 	//
 	// GetByID PRINT ONLY SAID ID
-	request = httptest.NewRequest(http.MethodGet, "/task/{id}", nil)
+	request = httptest.NewRequest(http.MethodGet, "/task/{id}", http.NoBody)
 	response = httptest.NewRecorder()
 
 	// GetByID error check - when the ID given is not a integer
@@ -188,6 +195,7 @@ func Test_Failing(t *testing.T) {
 
 	// GetByID error check - when the ID not present
 	request.SetPathValue("id", "3")
+
 	response = httptest.NewRecorder()
 
 	re.getByID(response, request)
@@ -196,18 +204,34 @@ func Test_Failing(t *testing.T) {
 		t.Errorf("Expected %d, got %d", http.StatusNotFound, response.Code)
 	}
 
+	// GetByID error check - w.Write err test
+	request.SetPathValue("id", "1")
+
+	errResponse := &errorWriter{}
+
+	re.getByID(errResponse, request)
+
+	if errResponse.status != http.StatusInternalServerError {
+		t.Errorf("Expected status %d, got %d", http.StatusInternalServerError, errResponse.status)
+	}
+
 	//
 	//
 	//
-	// Add a sample data into re to check for completed and delete
-	request = httptest.NewRequest(http.MethodPut, "/task", bytes.NewBufferString(task))
-	re.addTask(response, request, 1)
+	// VIEWING TASK
+	// viewTask error check - w.Write err test
+	errResponse = &errorWriter{}
+	re.viewTask(errResponse, request)
+
+	if errResponse.status != http.StatusInternalServerError {
+		t.Errorf("Expected status %d, got %d", http.StatusInternalServerError, errResponse.status)
+	}
 
 	//
 	//
 	//
 	// COMPLETE TASK - MARKING TRUE
-	request = httptest.NewRequest(http.MethodPut, "/task/{id}", nil)
+	request = httptest.NewRequest(http.MethodPut, "/task/{id}", http.NoBody)
 	response = httptest.NewRecorder()
 
 	// CompleteTask error check - when the ID given is not a integer
@@ -221,6 +245,7 @@ func Test_Failing(t *testing.T) {
 
 	// CompleteTask error check - when the ID not present
 	request.SetPathValue("id", "3")
+
 	response = httptest.NewRecorder()
 
 	re.completeTask(response, request)
@@ -233,7 +258,7 @@ func Test_Failing(t *testing.T) {
 	//
 	//
 	// DELETE TASK - REMOVING
-	request = httptest.NewRequest(http.MethodDelete, "/task/{id}", nil)
+	request = httptest.NewRequest(http.MethodDelete, "/task/{id}", http.NoBody)
 	response = httptest.NewRecorder()
 
 	// DeleteTask  error check - when the ID given is not a integer
@@ -247,6 +272,7 @@ func Test_Failing(t *testing.T) {
 
 	// DeleteTask error check - when the ID not present
 	request.SetPathValue("id", "3")
+
 	response = httptest.NewRecorder()
 
 	re.deleteTask(response, request)
@@ -254,5 +280,4 @@ func Test_Failing(t *testing.T) {
 	if response.Code != http.StatusNotFound {
 		t.Errorf("Expected %d, got %d", http.StatusNotFound, response.Code)
 	}
-
 }
