@@ -188,7 +188,7 @@ func (re *slices) deleteTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 }
 
-func main() {
+func mainAPI() {
 	data := &slices{}
 	getID := idGen()
 
