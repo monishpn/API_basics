@@ -30,7 +30,7 @@ func (e *errorWriter) WriteHeader(statusCode int) {
 }
 
 func TestHelloWorld(t *testing.T) {
-	request, _ := http.NewRequestWithContext(t.Context(), http.MethodGet, "localhost:8080/", http.NoBody)
+	request := httptest.NewRequest(http.MethodGet, "localhost:8080/", http.NoBody)
 
 	response := httptest.NewRecorder()
 
@@ -69,7 +69,7 @@ func Test_Passing(t *testing.T) {
 	//
 	//
 	// For AddTask
-	request, _ := http.NewRequestWithContext(t.Context(), http.MethodPost, "localhost:8080/task", strings.NewReader(task))
+	request := httptest.NewRequest(http.MethodPost, "localhost:8080/task", strings.NewReader(task))
 
 	response := httptest.NewRecorder()
 
@@ -84,7 +84,7 @@ func Test_Passing(t *testing.T) {
 	//
 	//
 	// For GetByID
-	request, _ = http.NewRequestWithContext(t.Context(), http.MethodGet, "localhost:8080/task/{id}", http.NoBody)
+	request = httptest.NewRequest(http.MethodGet, "localhost:8080/task/{id}", http.NoBody)
 	request.SetPathValue("id", ID)
 
 	response = httptest.NewRecorder()
@@ -106,7 +106,7 @@ func Test_Passing(t *testing.T) {
 	//
 	//
 	// For Completed Task
-	request, _ = http.NewRequestWithContext(t.Context(), http.MethodPut, "localhost:8080/task/{id}", http.NoBody)
+	request = httptest.NewRequest(http.MethodPut, "localhost:8080/task/{id}", http.NoBody)
 	request.SetPathValue("id", ID)
 
 	response = httptest.NewRecorder()
@@ -121,7 +121,7 @@ func Test_Passing(t *testing.T) {
 	//
 	//
 	// For Viewing
-	request, _ = http.NewRequestWithContext(t.Context(), http.MethodGet, "localhost:8080/task/", http.NoBody)
+	request = httptest.NewRequest(http.MethodGet, "localhost:8080/task/", http.NoBody)
 
 	response = httptest.NewRecorder()
 
@@ -138,7 +138,7 @@ func Test_Passing(t *testing.T) {
 	//
 	//
 	// For Deleting
-	request, _ = http.NewRequestWithContext(t.Context(), http.MethodDelete, "localhost:8080/task/{id}", http.NoBody)
+	request = httptest.NewRequest(http.MethodDelete, "localhost:8080/task/{id}", http.NoBody)
 	request.SetPathValue("id", ID)
 
 	response = httptest.NewRecorder()
