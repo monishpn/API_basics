@@ -61,13 +61,15 @@ func (db *input) addTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
+
 	_, err = db.data.Exec("INSERT INTO TASKS (task,completed) VALUES (?,?);", reqBody.T, false)
+
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Printf("%s", err.Error())
+
 		return
 	}
-
 }
 
 func (db *input) getByID(w http.ResponseWriter, r *http.Request) {
@@ -85,7 +87,9 @@ func (db *input) getByID(w http.ResponseWriter, r *http.Request) {
 	ans := db.data.QueryRow("SELECT * FROM TASKS WHERE id=?", index)
 
 	var id int
+
 	var task string
+
 	var completed bool
 
 	err = ans.Scan(&id, &task, &completed)
@@ -93,21 +97,22 @@ func (db *input) getByID(w http.ResponseWriter, r *http.Request) {
 		if err == sql.ErrNoRows {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintf(w, "Task not found")
-			return
-		} else {
-			http.Error(w, "Failed to read task row", http.StatusInternalServerError)
-			log.Fatal("While getting by ID -> ", err)
+
 			return
 		}
 
+		http.Error(w, "Failed to read task row", http.StatusInternalServerError)
+
+		log.Printf("While getting by ID -> %v", err)
+
+		return
 	}
+
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "ID: %d, Task: %s, Completed: %t\n", id, task, completed)
-
 }
 
 func (db *input) viewTask(w http.ResponseWriter, _ *http.Request) {
-
 	rows, err := db.data.Query("SELECT * FROM TASKS")
 	if err != nil {
 		http.Error(w, "Failed to query tasks", http.StatusInternalServerError)
@@ -118,19 +123,21 @@ func (db *input) viewTask(w http.ResponseWriter, _ *http.Request) {
 
 	for rows.Next() {
 		var id int
+
 		var task string
+
 		var completed bool
 
 		err := rows.Scan(&id, &task, &completed)
 		if err != nil {
 			http.Error(w, "Failed to read task row", http.StatusInternalServerError)
-			log.Fatal("While reading task row -> ", err)
+			log.Printf("%s", err.Error())
+
 			return
 		}
 
 		fmt.Fprintf(w, "ID: %d, Task: %s, Completed: %t\n", id, task, completed)
 	}
-
 }
 
 func (db *input) completeTask(w http.ResponseWriter, r *http.Request) {
@@ -150,6 +157,7 @@ func (db *input) completeTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Printf("%s", err.Error())
+
 		return
 	}
 
@@ -158,6 +166,7 @@ func (db *input) completeTask(w http.ResponseWriter, r *http.Request) {
 	if check == 0 {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "Task not found")
+
 		return
 	}
 
@@ -188,18 +197,21 @@ func (db *input) deleteTask(w http.ResponseWriter, r *http.Request) {
 	if check == 0 {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "Task not found")
+
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Deleted Successfully")
-
 }
 
 func main() {
 	db := &input{}
+
 	var err error
+
 	db.data, err = sql.Open("mysql", "root:root123@tcp(localhost:3306)/test_db")
+
 	if err != nil {
 		log.Fatal("Error while running the server", err)
 	}
