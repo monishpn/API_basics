@@ -113,7 +113,8 @@ func (db *input) viewTask(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "Failed to query tasks", http.StatusInternalServerError)
 		return
 	}
-	//defer rows.Close()
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var id int
