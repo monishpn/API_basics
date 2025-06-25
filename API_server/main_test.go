@@ -180,11 +180,11 @@ func Test_Failing(t *testing.T) {
 	//
 	//
 	//
-	// GetByID PRINT ONLY SAID ID
+	// GetByID PRINT ONLY REQUESTED ID
 	request = httptest.NewRequest(http.MethodGet, "/task/{id}", http.NoBody)
 	response = httptest.NewRecorder()
 
-	// GetByID error check - when the ID given is not a integer
+	// GetByID error check - when the ID given is not an integer
 	request.SetPathValue("id", "r")
 
 	re.getByID(response, request)
