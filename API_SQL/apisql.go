@@ -213,12 +213,12 @@ func main() {
 	db.data, err = sql.Open("mysql", "root:root123@tcp(localhost:3306)/test_db")
 
 	if err != nil {
-		log.Fatal("Error while running the server", err)
+		log.Fatal("Error while running the server -> ", err)
 	}
 
 	err = db.data.Ping()
 	if err != nil {
-		log.Fatal("Error while Checking for start of the server", err)
+		log.Fatal("Error while Checking for start of the server -> ", err)
 	}
 
 	_, err = db.data.Exec("CREATE TABLE IF NOT EXISTS TASKS ( id int auto_increment primary key, task text, completed bool );")
