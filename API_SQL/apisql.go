@@ -103,6 +103,7 @@ func (db *input) getByID(w http.ResponseWriter, r *http.Request) {
 func (db *input) viewTask(w http.ResponseWriter, _ *http.Request) {
 	rows, err := db.data.Query("SELECT * FROM TASKS")
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		http.Error(w, "Failed to query tasks", http.StatusInternalServerError)
 		return
 	}
@@ -118,12 +119,14 @@ func (db *input) viewTask(w http.ResponseWriter, _ *http.Request) {
 
 		err := rows.Scan(&id, &task, &completed)
 		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
 			http.Error(w, "Failed to read task row", http.StatusInternalServerError)
 			log.Printf("%s", err.Error())
 
 			return
 		}
 
+		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "ID: %d, Task: %s, Completed: %t\n", id, task, completed)
 	}
 }

@@ -80,6 +80,16 @@ func TestSQL(t *testing.T) {
 		t.Errorf("Wrong result:\n expected %s,\n got %s", exp, response.Body.String())
 	}
 
+	//VIEW TASK request evaluation
+	request = httptest.NewRequest(http.MethodPut, "http://localhost:8080/task/{id}", http.NoBody)
+	response = httptest.NewRecorder()
+
+	db.viewTask(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Wrong status code:\n expected %d,\n got %d", http.StatusOK, response.Code)
+	}
+
 	//PUT COMPLETED request evaluation
 	request = httptest.NewRequest(http.MethodPut, "http://localhost:8080/task/{id}", http.NoBody)
 	response = httptest.NewRecorder()
