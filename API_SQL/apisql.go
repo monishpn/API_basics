@@ -25,12 +25,6 @@ func hellohandler(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-type Record struct {
-	ID        int
-	Task      string
-	Completed bool
-}
-
 type input struct {
 	data *sql.DB
 }
