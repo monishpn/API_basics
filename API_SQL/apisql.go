@@ -1,4 +1,4 @@
-package main
+package SQL
 
 import (
 	"database/sql"
@@ -56,14 +56,8 @@ func (db *input) addTask(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 
-	_, err = db.data.Exec("INSERT INTO TASKS (task,completed) VALUES (?,?);", reqBody.T, false)
+	_, _ = db.data.Exec("INSERT INTO TASKS (task,completed) VALUES (?,?);", reqBody.T, false)
 
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("%s", err.Error())
-
-		return
-	}
 }
 
 func (db *input) getByID(w http.ResponseWriter, r *http.Request) {
@@ -71,9 +65,9 @@ func (db *input) getByID(w http.ResponseWriter, r *http.Request) {
 
 	index, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("%s", err.Error())
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 
 		return
 	}
@@ -103,7 +97,7 @@ func (db *input) getByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "ID: %d, Task: %s, Completed: %t\n", id, task, completed)
+	fmt.Fprintf(w, "ID: %d, Task: %s, Completed: %t", id, task, completed)
 }
 
 func (db *input) viewTask(w http.ResponseWriter, _ *http.Request) {
@@ -139,9 +133,9 @@ func (db *input) completeTask(w http.ResponseWriter, r *http.Request) {
 
 	index, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("%s", err.Error())
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 
 		return
 	}
@@ -173,9 +167,9 @@ func (db *input) deleteTask(w http.ResponseWriter, r *http.Request) {
 
 	index, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("%s", err.Error())
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 
 		return
 	}
