@@ -116,7 +116,6 @@ func TestSQL(t *testing.T) {
 
 }
 
-
 func TestSQLWithError(t *testing.T) {
 	db := &input{}
 	test := `{"Testing"}`
@@ -143,7 +142,95 @@ func TestSQLWithError(t *testing.T) {
 
 	db.addTask(response, request)
 
-	if response.Header().
+	if response.Code != http.StatusInternalServerError {
+		t.Errorf("Wrong result: expected %d, got %d", http.StatusInternalServerError, response.Code)
+	}
 
+	//ADD TASK when the body is sent not right
+	test = `{ "task": 1}`
+
+	request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/task", strings.NewReader(test))
+	response = httptest.NewRecorder()
+
+	db.addTask(response, request)
+
+	if response.Code != http.StatusInternalServerError {
+		t.Errorf("Wrong result: expected %d, got %d", http.StatusInternalServerError, response.Code)
+	}
+
+	//
+	//
+	//
+	//GET BY ID err check when ID is corrupted
+	request = httptest.NewRequest(http.MethodGet, "http://localhost:8080/task/{id}", http.NoBody)
+	response = httptest.NewRecorder()
+	request.SetPathValue("id", "r")
+
+	db.getByID(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Wrong result: expected %d, got %d", http.StatusBadRequest, response.Code)
+	}
+
+	//GET BY ID err check when ID is not present
+	request = httptest.NewRequest(http.MethodGet, "http://localhost:8080/task/{id}", http.NoBody)
+	response = httptest.NewRecorder()
+	request.SetPathValue("id", "0")
+
+	db.getByID(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Wrong result: expected %d, got %d", http.StatusNotFound, response.Code)
+	}
+
+	//
+	//
+	//
+	//COMPLETE TASK err check when ID is corrupted
+	request = httptest.NewRequest(http.MethodPut, "http://localhost:8080/task/{id}", http.NoBody)
+	response = httptest.NewRecorder()
+	request.SetPathValue("id", "r")
+
+	db.completeTask(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Wrong result: expected %d, got %d", http.StatusBadRequest, response.Code)
+	}
+
+	//COMPLETE TASK err check when ID is not present
+	request = httptest.NewRequest(http.MethodPut, "http://localhost:8080/task/{id}", http.NoBody)
+	response = httptest.NewRecorder()
+	request.SetPathValue("id", "0")
+
+	db.completeTask(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Wrong result: expected %d, got %d", http.StatusNotFound, response.Code)
+	}
+
+	//
+	//
+	//
+	//DELETE err check when ID is corrupted
+	request = httptest.NewRequest(http.MethodDelete, "http://localhost:8080/task/{id}", http.NoBody)
+	response = httptest.NewRecorder()
+	request.SetPathValue("id", "r")
+
+	db.deleteTask(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Wrong result: expected %d, got %d", http.StatusBadRequest, response.Code)
+	}
+
+	//COMPLETE TASK err check when ID is not present
+	request = httptest.NewRequest(http.MethodDelete, "http://localhost:8080/task/{id}", http.NoBody)
+	response = httptest.NewRecorder()
+	request.SetPathValue("id", "0")
+
+	db.deleteTask(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Wrong result: expected %d, got %d", http.StatusNotFound, response.Code)
+	}
 
 }
