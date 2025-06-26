@@ -103,7 +103,7 @@ func (db *input) getByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "ID: %d, Task: %s, Completed: %t\n", id, task, completed)
+	fmt.Fprintf(w, "ID: %d, Task: %s, Completed: %t", id, task, completed)
 }
 
 func (db *input) viewTask(w http.ResponseWriter, _ *http.Request) {
